@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parametric Heart Typesetter — Multilingual “I love you” Canvas Engine</title>
+  <meta name="description" content="Typesets “I love you” in 23 languages across Latin, Cyrillic, Greek, Devanagari, Bengali, Han, Kana and Hangul scripts along the parametric heart curve x = 16 sin³t, y = 13 cos t − 5 cos 2t − 2 cos 3t − cos 4t, with live animation and typography controls.">
+  <meta name="theme-color" content="#09090b">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=Noto+Sans+JP:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Sans+SC:wght@400;700&display=swap">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand mono"><span class="brand-mark" aria-hidden="true">♥</span>HTS<span class="dim">/0.4</span></div>
+    <h1 class="title">Parametric Heart Typesetter</h1>
+    <p class="eq mono" aria-label="Parametric definition of the heart curve">
+      <span><i>x</i>(<i>t</i>) = 16 sin<sup>3</sup><i>t</i></span>
+      <span class="sep" aria-hidden="true">│</span>
+      <span><i>y</i>(<i>t</i>) = 13 cos <i>t</i> − 5 cos 2<i>t</i> − 2 cos 3<i>t</i> − cos 4<i>t</i></span>
+      <span class="sep" aria-hidden="true">│</span>
+      <span><i>t</i> ∈ [0, 2π)</span>
+    </p>
+    <div class="phase-pill mono" id="phasePill" data-phase="IDLE">
+      <span class="dot" aria-hidden="true"></span><span id="phaseLabel">IDLE</span>
+    </div>
+  </header>
+
+  <!-- ============ CONTROL SIDEBAR ============ -->
+  <aside class="sidebar" aria-label="Animation and typography controls">
+
+    <!-- 01 TRANSPORT -->
+    <section class="panel" aria-labelledby="h-transport">
+      <header class="panel-h"><span class="idx">01</span><h2 id="h-transport">Transport</h2><span class="meta">requestAnimationFrame</span></header>
+      <div class="panel-b">
+        <div class="transport">
+          <button class="btn btn-primary" id="btnPlay" type="button" aria-pressed="false" title="Play / Pause (Space)">
+            <svg class="ico ico-play" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>
+            <svg class="ico ico-pause" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1h2v8H2zM6 1h2v8H6z"/></svg>
+            <span id="btnPlayLabel">Play</span>
+          </button>
+          <button class="btn" id="btnStep" type="button" title="Step one frame (→)">
+            <svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1l5 4-5 4zM7 1h2v8H7z"/></svg>Step
+          </button>
+          <button class="btn" id="btnReset" type="button" title="Reset (R)">
+            <svg class="ico" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 1a4 4 0 1 1-3.7 2.5l1.4.6A2.5 2.5 0 1 0 5 2.5V4L2.5 2 5 0z"/></svg>Reset
+          </button>
+          <button class="btn" id="btnExport" type="button" title="Export PNG">PNG</button>
+        </div>
+
+        <div class="ctl">
+          <label for="delay">Frame delay</label><output id="delayOut" for="delay"></output>
+          <input type="range" id="delay" min="0" max="400" step="1" value="16">
+        </div>
+        <div class="ctl">
+          <label for="batch">Glyph runs / frame</label><output id="batchOut" for="batch"></output>
+          <input type="range" id="batch" min="1" max="40" step="1" value="4">
+        </div>
+
+        <div class="progress" aria-label="Phase progress">
+          <div class="prog-row"><span class="prog-k mono">TRACE</span><div class="prog-track"><div class="prog-fill" id="progTrace"></div></div><span class="prog-v mono" id="progTraceV">0%</span></div>
+          <div class="prog-row"><span class="prog-k mono">FILL</span><div class="prog-track"><div class="prog-fill" id="progFill"></div></div><span class="prog-v mono" id="progFillV">0%</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 GEOMETRY -->
+    <section class="panel" aria-labelledby="h-geo">
+      <header class="panel-h"><span class="idx">02</span><h2 id="h-geo">Curve geometry</h2><span class="meta">perimeter pass</span></header>
+      <div class="panel-b">
+        <div class="ctl">
+          <label for="scale">Scale (viewport fit)</label><output id="scaleOut" for="scale"></output>
+          <input type="range" id="scale" min="0.4" max="1" step="0.01" value="0.92">
+        </div>
+        <div class="ctl-2">
+          <div class="ctl">
+            <label for="rings">Perimeter rings</label><output id="ringsOut" for="rings"></output>
+            <input type="range" id="rings" min="1" max="5" step="1" value="2">
+          </div>
+          <div class="ctl">
+            <label for="ringGap">Ring inset</label><output id="ringGapOut" for="ringGap"></output>
+            <input type="range" id="ringGap" min="10" max="32" step="1" value="16">
+          </div>
+        </div>
+        <div class="switch-row">
+          <label class="switch"><input type="checkbox" id="tangent" checked><span>Tangent-aligned runs</span></label>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 FILL -->
+    <section class="panel" aria-labelledby="h-fill">
+      <header class="panel-h"><span class="idx">03</span><h2 id="h-fill">Stochastic fill</h2><span class="meta">seeded rejection sampling</span></header>
+      <div class="panel-b">
+        <div class="ctl">
+          <label for="density">Interior target (words)</label><output id="densityOut" for="density"></output>
+          <input type="range" id="density" min="0" max="3000" step="10" value="900">
+        </div>
+        <div class="ctl">
+          <label for="jitter">Rotation jitter</label><output id="jitterOut" for="jitter"></output>
+          <input type="range" id="jitter" min="0" max="90" step="1" value="0">
+        </div>
+        <div class="seed-row">
+          <label for="seed" class="mono lbl">PRNG seed <span class="dim">mulberry32</span></label>
+          <div class="seed-ctl">
+            <input type="number" id="seed" class="num mono" min="0" max="4294967295" step="1" value="1402">
+            <button class="btn btn-sm" id="btnReseed" type="button" title="Random seed">Reseed</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 TYPOGRAPHY -->
+    <section class="panel" aria-labelledby="h-type">
+      <header class="panel-h"><span class="idx">04</span><h2 id="h-type">Typography</h2><span class="meta">8–14 px · 400/700</span></header>
+      <div class="panel-b">
+        <div class="ctl-2">
+          <div class="ctl">
+            <label for="sizeMin">Size min</label><output id="sizeMinOut" for="sizeMin"></output>
+            <input type="range" id="sizeMin" min="8" max="14" step="1" value="8">
+          </div>
+          <div class="ctl">
+            <label for="sizeMax">Size max</label><output id="sizeMaxOut" for="sizeMax"></output>
+            <input type="range" id="sizeMax" min="8" max="14" step="1" value="14">
+          </div>
+        </div>
+        <div class="tones">
+          <div class="tones-h mono"><span>Crimson tone ramp</span><span class="dim">H 347°</span></div>
+          <div class="tone-grid" id="toneGrid" role="group" aria-label="Tone palette used when tone randomization is on"></div>
+          <p class="note">Items with <b class="mono">T</b> off render in fixed <span class="mono acc">#e11d48</span>; <b class="mono">W</b> off → 400; <b class="mono">S</b> off → midpoint size.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 CORPUS -->
+    <section class="panel panel-corpus" aria-labelledby="h-corpus">
+      <header class="panel-h"><span class="idx">05</span><h2 id="h-corpus">Phrase corpus</h2><span class="meta" id="corpusMeta"></span></header>
+      <div class="panel-b">
+        <div class="chips" id="scriptChips" role="group" aria-label="Toggle scripts"></div>
+        <div class="table-wrap">
+          <table class="corpus" id="corpusTable">
+            <thead>
+              <tr>
+                <th scope="col" class="c-on"><span class="sr">Enabled</span></th>
+                <th scope="col" class="c-code">ISO</th>
+                <th scope="col" class="c-text">Phrase</th>
+                <th scope="col" class="c-tg"><button type="button" class="tg-all" data-all="rw" title="Toggle weight randomization for all">W</button></th>
+                <th scope="col" class="c-tg"><button type="button" class="tg-all" data-all="rs" title="Toggle scale randomization for all">S</button></th>
+                <th scope="col" class="c-tg"><button type="button" class="tg-all" data-all="rt" title="Toggle tone randomization for all">T</button></th>
+                <th scope="col" class="c-x"><span class="sr">Remove</span></th>
+              </tr>
+            </thead>
+            <tbody id="corpusBody"></tbody>
+          </table>
+        </div>
+        <div class="ingest">
+          <label for="ingestText" class="mono lbl">Ingest phrases <span class="dim">one per line · <code>iso | language | phrase</code></span></label>
+          <textarea id="ingestText" rows="3" spellcheck="false" placeholder="ga | Irish | Tá grá agam duit&#10;ta | Tamil | நான் உன்னை காதலிக்கிறேன்&#10;Te iubesc"></textarea>
+          <div class="ingest-actions">
+            <button class="btn btn-sm" id="btnAppend" type="button">Append</button>
+            <button class="btn btn-sm" id="btnReplace" type="button">Replace corpus</button>
+            <button class="btn btn-sm btn-ghost" id="btnRestore" type="button">Restore default</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </aside>
+
+  <!-- ============ VIEWPORT ============ -->
+  <main class="viewport">
+    <div class="vp-toolbar">
+      <span class="mono vp-k">LAYERS</span>
+      <label class="switch"><input type="checkbox" id="showGrid" checked><span>Grid</span></label>
+      <label class="switch"><input type="checkbox" id="showGuide" checked><span>Curve</span></label>
+      <label class="switch"><input type="checkbox" id="showBoundary"><span>Fill bound</span></label>
+      <label class="switch"><input type="checkbox" id="showPen" checked><span>Pen</span></label>
+      <span class="vp-spacer"></span>
+      <span class="mono vp-read" id="vpUnit">u = — px</span>
+    </div>
+    <div class="stage-wrap" id="stageWrap">
+      <canvas id="stage" role="img" aria-label="Heart curve typeset with the phrase I love you in many languages">Your browser does not support HTML5 canvas.</canvas>
+      <div class="corner tl mono" id="cornerTL">VIEWPORT —</div>
+      <div class="corner bl mono" id="cornerBL">x —  y —</div>
+      <div class="corner br mono" id="cornerBR">seed —</div>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+  </main>
+
+  <!-- ============ INSPECTOR ============ -->
+  <aside class="inspector" aria-label="Telemetry">
+    <section class="panel" aria-labelledby="h-tel">
+      <header class="panel-h"><span class="idx">T</span><h2 id="h-tel">Telemetry</h2><span class="meta">10 Hz</span></header>
+      <dl class="metrics">
+        <div><dt>Frame</dt><dd id="mFrame">0</dd></div>
+        <div><dt>rAF</dt><dd id="mRaf">0</dd></div>
+        <div><dt>Elapsed</dt><dd id="mElapsed">00:00.000</dd></div>
+        <div><dt>FPS</dt><dd id="mFps">—</dd></div>
+        <div><dt>Perimeter</dt><dd id="mPerim">0</dd></div>
+        <div><dt>Interior</dt><dd id="mInterior">0</dd></div>
+        <div><dt>Plotted</dt><dd id="mTotal" class="acc">0</dd></div>
+        <div><dt>Tick rate</dt><dd id="mRate">—</dd></div>
+        <div><dt>Density</dt><dd id="mDensity">0</dd></div>
+        <div><dt>Ink cover</dt><dd id="mInk">0%</dd></div>
+        <div><dt>Accept</dt><dd id="mAccept">—</dd></div>
+        <div><dt>Attempts</dt><dd id="mAttempts">0</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel" aria-labelledby="h-pen">
+      <header class="panel-h"><span class="idx">P</span><h2 id="h-pen">Pen state</h2><span class="meta" id="penMode">—</span></header>
+      <dl class="metrics m3">
+        <div><dt>t</dt><dd id="penT">—</dd></div>
+        <div><dt>x(t)</dt><dd id="penX">—</dd></div>
+        <div><dt>y(t)</dt><dd id="penY">—</dd></div>
+      </dl>
+      <p class="pen-last mono" id="penLast">—</p>
+    </section>
+
+    <section class="panel" aria-labelledby="h-def">
+      <header class="panel-h"><span class="idx">D</span><h2 id="h-def">Definition</h2><span class="meta">curve units (u)</span></header>
+      <dl class="defs mono">
+        <div><dt>x(t)</dt><dd>16 sin³t</dd></div>
+        <div><dt>y(t)</dt><dd>13cos t − 5cos 2t − 2cos 3t − cos 4t</dd></div>
+        <div><dt>x′(t)</dt><dd>48 sin²t cos t</dd></div>
+        <div><dt>y′(t)</dt><dd>−13sin t + 10sin 2t + 6sin 3t + 4sin 4t</dd></div>
+        <div><dt>Area</dt><dd>∮x dy = 180π ≈ 565.487 u²</dd></div>
+        <div><dt>Arc L</dt><dd id="defL">—</dd></div>
+        <div><dt>Bounds</dt><dd id="defB">—</dd></div>
+        <div><dt>Area px</dt><dd id="defApx">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="panel panel-log" aria-labelledby="h-log">
+      <header class="panel-h"><span class="idx">L</span><h2 id="h-log">Event log</h2><button class="link mono" id="btnClearLog" type="button">clear</button></header>
+      <ol class="log mono" id="log" aria-live="polite"></ol>
+    </section>
+  </aside>
+
+  <!-- ============ STATUS BAR ============ -->
+  <footer class="statusbar mono">
+    <span><kbd>Space</kbd> play/pause</span>
+    <span><kbd>→</kbd> step</span>
+    <span><kbd>R</kbd> reset</span>
+    <span class="sb-spacer"></span>
+    <span id="sbFonts">fonts: loading…</span>
+    <span id="sbCanvas">canvas —</span>
+  </footer>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
